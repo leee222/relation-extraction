@@ -1,5 +1,7 @@
 # BERT(S) for Relation Extraction
 
+ORIGINAL CODE: https://github.com/plkmo/BERT-Relation-Extraction
+
 ## Overview
 A PyTorch implementation of the models for the paper ["Matching the Blanks: Distributional Similarity for Relation Learning"](https://arxiv.org/pdf/1906.03158.pdf) published in ACL 2019.  
 Note: This is not an official repo for the paper.  
