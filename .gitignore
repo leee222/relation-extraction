@@ -11,3 +11,7 @@
 /data/*
 /additional_models/biobert_v1.1_pubmed/*
 /__pycache__/*
+
+.DS_Store
+
+.idea
