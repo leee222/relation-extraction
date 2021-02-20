@@ -37,11 +37,13 @@ def process_sent(sent):
         return sent
     return
 
+
 def process_textlines(text):
     text = [process_sent(sent) for sent in text]
     text = " ".join([t for t in text if t is not None])
     text = re.sub(' {2,}', ' ', text) # remove extra spaces > 1
     return text    
+
 
 def create_pretraining_corpus(raw_text, nlp, window_size=40):
     '''
@@ -50,24 +52,35 @@ def create_pretraining_corpus(raw_text, nlp, window_size=40):
     '''
     logger.info("Processing sentences...")
     sents_doc = nlp(raw_text)
-    ents = sents_doc.ents # get entities
+    ents = sents_doc.ents  # get entities
     
     logger.info("Processing relation statements by entities...")
+
     entities_of_interest = ["PERSON", "NORP", "FAC", "ORG", "GPE", "LOC", "PRODUCT", "EVENT", \
                             "WORK_OF_ART", "LAW", "LANGUAGE"]
+
     length_doc = len(sents_doc)
-    D = []; ents_list = []
+    D = []
+    ents_list = []
+
+    ents = ents[:3]
+
     for i in tqdm(range(len(ents))):
         e1 = ents[i]
-        e1start = e1.start; e1end = e1.end
+        e1start = e1.start
+        e1end = e1.end
+
         if e1.label_ not in entities_of_interest:
             continue
-        if re.search("[\d+]", e1.text): # entities should not contain numbers
+        if re.search("[\d+]", e1.text):  # entities should not contain numbers
             continue
         
         for j in range(1, len(ents) - i):
+
             e2 = ents[i + j]
-            e2start = e2.start; e2end = e2.end
+            e2start = e2.start
+            e2end = e2.end
+
             if e2.label_ not in entities_of_interest:
                 continue
             if re.search("[\d+]", e2.text): # entities should not contain numbers
@@ -119,8 +132,10 @@ def create_pretraining_corpus(raw_text, nlp, window_size=40):
                 r = (x, (e1start - left_r, e1end - left_r), (e2start - left_r, e2end - left_r))
                 D.append((r, e1.text, e2.text))
                 ents_list.append((e1.text, e2.text))
-                #print(e1.text,",", e2.text)
-    print("Processed dataset samples from named entity extraction:")
+
+    LOGGER.info(f"Processed dataset samples from named entity extraction: {len(D)} triplets")
+    sys.exit()
+
     samples_D_idx = np.random.choice([idx for idx in range(len(D))],\
                                       size=min(3, len(D)),\
                                       replace=False)
@@ -164,6 +179,7 @@ def create_pretraining_corpus(raw_text, nlp, window_size=40):
         for idx in samples_D_idx:
             print(D[idx], '\n')
     return D
+
 
 class pretrain_dataset(Dataset):
     def __init__(self, args, D, batch_size=None):
@@ -361,7 +377,8 @@ class pretrain_dataset(Dataset):
                 batch.append((x, masked_for_pred, e1_e2_start, torch.FloatTensor([Q]), torch.LongTensor([0])))
             batch = self.PS(batch)
             return batch
-    
+
+
 class Pad_Sequence():
     """
     collate_fn for dataloader to collate sequences of different lengths into a fixed length batch
@@ -403,11 +420,13 @@ class Pad_Sequence():
 def load_dataloaders(args, max_length=50000):
     
     if not os.path.isfile("./data/D.pkl"):
+
         logger.info("Loading pre-training data...")
+
         with open(args.pretrain_data, "r", encoding="utf8") as f:
+            # generator
             text = f.readlines()
         
-        #text = text[:1500] # restrict size for testing
         text = process_textlines(text)
         
         logger.info("Length of text (characters): %d" % len(text))
